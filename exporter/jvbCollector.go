@@ -241,10 +241,10 @@ func (c *JvbCollector) Collect(metrics chan<- prometheus.Metric) {
 				for _, metric := range c.metrics {
 					if metric.name == c.NamePrefix+stat.Name {
 
-						//special case for conference_sizes
+						//special case for histograms
 						if metric.name == c.NamePrefix+"conference_sizes" {
-							conSizes, sum := conferenceSizesHelper(stat.Value)
-							m, err := prometheus.NewConstHistogram(metric.desc, sum, float64(sum), conSizes, set.jvbIdentifier)
+							buckets, sum := bucketsHelper(stat.Value)
+							m, err := prometheus.NewConstHistogram(metric.desc, sum, float64(sum), buckets, set.jvbIdentifier)
 
 							if err != nil {
 								fmt.Printf("Unable to publish metric %s: %s\n", metric.name, err.Error())
@@ -294,9 +294,9 @@ func (c *JvbCollector) Update(identifier string, stats *Stats) {
 	})
 }
 
-func conferenceSizesHelper(conferenceSizes string) (conferenceSizesHistogram map[float64]uint64, sum uint64) {
-	var sizes = make(map[float64]uint64)
-	value := strings.Trim(conferenceSizes, "[]")
+func bucketsHelper(value string) (histogram map[float64]uint64, sum uint64) {
+	histogram = make(map[float64]uint64)
+	value = strings.Trim(value, "[]")
 	var values []uint64
 	for _, v := range strings.Split(value, ",") {
 		vuint, _ := strconv.ParseUint(v, 10, 64)
@@ -324,8 +324,8 @@ func conferenceSizesHelper(conferenceSizes string) (conferenceSizesHistogram map
 	}
 
 	for i, v := range values {
-		sizes[float64(i)] = v
+		histogram[float64(i)] = v
 	}
 
-	return sizes, sum
+	return
 }
