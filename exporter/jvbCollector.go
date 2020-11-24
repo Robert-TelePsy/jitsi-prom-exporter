@@ -272,34 +272,6 @@ func (c *JvbCollector) Collect(metrics chan<- prometheus.Metric) {
 			}
 		}
 	}
-
-	//conference_sizes_combined, a new metric where we sum up all valid conference sizes histograms
-	var combinedConferenceSizes = make(map[float64]uint64)
-	var combinedSum uint64
-	for _, s := range c.statsSets {
-		if time.Since(s.lastUpdated) <= c.Retention {
-			for _, stat := range s.stats.Stats {
-				if stat.Name == "conference_sizes" {
-					conSizes, sum := conferenceSizesHelper(stat.Value)
-					for bucket, numConferences := range conSizes {
-						combinedConferenceSizes[bucket] += numConferences
-					}
-					combinedSum += sum
-				}
-			}
-		}
-	}
-
-	metric := newMetric("conference_sizes_combined", prometheus.UntypedValue,
-		"All active conference_sizes summed up into this histogram, see conference_sizes", []string{}, prometheus.Labels{})
-	m, err := prometheus.NewConstHistogram(metric.desc, combinedSum, float64(combinedSum), combinedConferenceSizes)
-
-	if err != nil {
-		fmt.Printf("Unable to create %s metric: %s\n", metric.name, err.Error())
-	} else {
-		metrics <- m
-	}
-
 }
 
 //Update updates the cached stats for the JVB identified by identifier, inserts a new stats set if none present yet.
